@@ -1,0 +1,40 @@
+name: Nginx webserver deployment
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      
+    - name: Install Docker
+      run: |
+        sudo apt-get update
+        sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common -y
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+        sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        sudo apt-get update
+        sudo apt-get install docker-ce docker-ce-cli containerd.io -y
+    
+    - name: Build nginx Docker image
+      run: |
+        docker build -t nginx-server .
+        
+    - name: Run nginx docker container
+      run: |
+        docker run -d --name nginx-server -p 80:80 nginx-server
+        
+    - name: Get starting page
+      run: |
+        curl -o index.html http://localhost:80
+        
+    - name: Archive index.html
+      uses: actions/upload-artifact@v2
+      with:
+        name: index.html
+        path: index.html
